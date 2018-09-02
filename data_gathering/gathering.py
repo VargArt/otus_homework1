@@ -123,6 +123,9 @@ pep8 .
 import logging
 
 import sys
+import vk_api
+import csv
+import pandas as pd
 
 from scrappers.scrapper import Scrapper
 from storages.file_storage import FileStorage
@@ -131,25 +134,53 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-SCRAPPED_FILE = 'scrapped_data.txt'
+SCRAPPED_FILE = 'scrapped_data_vk.txt'
 TABLE_FORMAT_FILE = 'data.csv'
 
 
 def gather_process():
     logger.info("gather")
-    storage = FileStorage(SCRAPPED_FILE)
 
-    # You can also pass a storage
-    scrapper = Scrapper()
-    scrapper.scrap_process(storage)
+    login = input('login: ')
+    password = input('password: ')
+
+    vk_session = vk_api.VkApi(login, password)
+
+    try:
+        logger.info("trying authorize in vk")
+        vk_session.auth(token_only=True)
+    except vk_api.AuthError as error_msg:
+        print(error_msg)
+
+    tools = vk_api.VkTools(vk_session)
+
+    domain_name = input('enter vk short name')
+    logger.info("getting posts")
+    wall = tools.get_all('wall.get', 10, {'domain': domain_name})
+
+    convert_data_to_table_format(wall)
 
 
-def convert_data_to_table_format():
+def convert_data_to_table_format(data):
     logger.info("transform")
 
-    # Your code here
-    # transform gathered data from txt file to pandas DataFrame and save as csv
-    pass
+    file_name = input('enter file name without extension') + '.tsv'
+    with open(file_name, 'w') as csv_file:
+        interesting_fields = ['id', 'from_id', 'owner_id', 'date', 'marked_as_ads', 'post_type', 'text', 'likes',
+                              'reposts', 'views']
+
+        tsv_writer = csv.DictWriter(csv_file, delimiter='\t', fieldnames = interesting_fields, extrasaction='ignore')
+        tsv_writer.writeheader()
+        for wall_item in data['items']:
+            formated_dict = {}
+            for k, v in wall_item.items():
+                if k == 'likes' or k == 'reposts' or k == 'views':
+                    formated_dict[k] = v['count']
+                elif k == 'text':
+                    formated_dict[k] = v.replace("\t", " ")
+                else:
+                    formated_dict[k] = v
+            tsv_writer.writerow(formated_dict)
 
 
 def stats_of_data():
@@ -172,7 +203,7 @@ if __name__ == '__main__':
         gather_process()
 
     elif sys.argv[1] == 'transform':
-        convert_data_to_table_format()
+        print('oops!')
 
     elif sys.argv[1] == 'stats':
         stats_of_data()
