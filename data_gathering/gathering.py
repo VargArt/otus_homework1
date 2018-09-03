@@ -125,17 +125,12 @@ import logging
 import sys
 import vk_api
 import csv
-import pandas as pd
 
-from scrappers.scrapper import Scrapper
-from storages.file_storage import FileStorage
+import language_statistic as ls
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-SCRAPPED_FILE = 'scrapped_data_vk.txt'
-TABLE_FORMAT_FILE = 'data.csv'
 
 
 def gather_process():
@@ -185,11 +180,20 @@ def convert_data_to_table_format(data):
 
 def stats_of_data():
     logger.info("stats")
+    posts = pd.read_csv('tproger_posts.tsv', sep='\t')
 
-    # Your code here
-    # Load pandas DataFrame and print to stdout different statistics about the data.
-    # Try to think about the data and use not only describe and info.
-    # Ask yourself what would you like to know about this data (most frequent word, or something else)
+    logger.info("common stats")
+
+    print('Среднее количество лайков:', posts['likes'].mean())
+    print('Среднее количество репостов:', posts['reposts'].mean())
+    print('Среднее количество просмотров:', posts['views'].mean())
+
+    ads = posts[posts['marked_as_ads'] > 0]
+    print('Количество рекламных записей:', ads.shape[0], 'из:', posts.shape[0], '(', (1067/21461), '%', ')')
+
+    logger.info("language stats")
+
+    ls.language_statistic(posts)
 
 
 if __name__ == '__main__':
