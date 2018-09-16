@@ -133,6 +133,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+"""
+Собираем данные со стены сообщества вк, по вашему выбору, с дальнейшей записью в tsv файл
+В дальнейшей работе будут использованы данные со стены "типичного программиста"
+"""
 def gather_process():
     logger.info("gather")
 
@@ -155,7 +159,9 @@ def gather_process():
 
     convert_data_to_table_format(wall)
 
-
+"""
+Преобразуем данные в tsv формат и записываем их в файл
+"""
 def convert_data_to_table_format(data):
     logger.info("transform")
 
@@ -178,11 +184,12 @@ def convert_data_to_table_format(data):
             tsv_writer.writerow(formated_dict)
 
 
+"""
+выводим статистику
+"""
 def stats_of_data():
     logger.info("stats")
     posts = pd.read_csv('tproger_posts.tsv', sep='\t')
-
-    logger.info("common stats")
 
     print('Среднее количество лайков:', posts['likes'].mean())
     print('Среднее количество репостов:', posts['reposts'].mean())
@@ -191,7 +198,7 @@ def stats_of_data():
     ads = posts[posts['marked_as_ads'] > 0]
     print('Количество рекламных записей:', ads.shape[0], 'из:', posts.shape[0], '(', (1067/21461), '%', ')')
 
-    logger.info("language stats")
+    'статистика по языкам программирования'
 
     ls.language_statistic(posts)
 
